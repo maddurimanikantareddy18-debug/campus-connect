@@ -10,15 +10,15 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "lovely_MSR", // 👈 YOUR PASSWORD
+  password: "lovely_MSR",
   database: "campus_connect"
 });
 
 db.connect((err) => {
   if (err) {
-    console.log("Database Error:", err);
+    console.log("❌ Database Error:", err);
   } else {
-    console.log("MySQL Connected ✅");
+    console.log("✅ MySQL Connected");
   }
 });
 
@@ -30,105 +30,134 @@ app.get("/", (req, res) => {
 
 // 🔥 REGISTER API
 app.post("/register", (req, res) => {
-  const { role, name, email, password, roll, branch, year, phone, staff_id, department, club_name } = req.body;
+  const { role } = req.body;
 
   let query = "";
   let values = [];
 
+  console.log("📥 Register Data:", req.body);
+
+  // 🟢 STUDENT
   if (role === "Student") {
-    query = "INSERT INTO student (name, roll, branch, year, email, phone, password) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const { name, roll, branch, year, email, phone, password } = req.body;
+
+    query = `
+      INSERT INTO student (name, roll, branch, year, email, phone, password)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
     values = [name, roll, branch, year, email, phone, password];
   }
 
-  else if (role === "Admin") {
-    query = "INSERT INTO admin (name, staff_id, department, role, email, phone, password) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    values = [name, staff_id, department, role, email, phone, password];
-  }
-
+  // 🟣 ALUMNI
   else if (role === "Alumni") {
-    query = "INSERT INTO alumni (name, branch, passout_year, company, job_role, email, phone, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    values = [name, branch, year, req.body.company, req.body.job_role, email, phone, password];
+    const { name, branch, year, company, job_role, email, phone, password } = req.body;
+
+    query = `
+      INSERT INTO alumni (name, branch, passout_year, company, job_role, email, phone, password)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    values = [name, branch, year, company, job_role, email, phone, password];
   }
 
+  // 🟡 ORGANIZER
   else if (role === "Organization") {
-    query = "INSERT INTO organizer (name, roll, club_name, role, year, email, phone, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    values = [name, roll, club_name, role, year, email, phone, password];
+    const { name, roll, club_name, branch, year, email, phone, password } = req.body;
+
+    query = `
+      INSERT INTO organizer (name, roll, club_name, branch, year, email, phone, password)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    values = [name, roll, club_name, branch, year, email, phone, password];
+  }
+
+  // 🔴 ADMIN
+  else if (role === "Admin") {
+    const { name, staff_id, department, admin_role, email, phone, password } = req.body;
+
+    query = `
+      INSERT INTO admin (name, staff_id, department, admin_role, email, phone, password)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    values = [name, staff_id, department, admin_role, email, phone, password];
+  }
+
+  else {
+    return res.status(400).json({ message: "Invalid role ❌" });
   }
 
   db.query(query, values, (err, result) => {
     if (err) {
-      console.log(err);
-      return res.status(500).send("Error inserting data");
+      console.log("❌ Register Error:", err);
+      return res.status(500).json({ message: "Error inserting data ❌" });
     }
-    res.send("User Registered Successfully 🎉");
+
+    res.json({ success: true, message: "User Registered Successfully 🎉" });
+  });
+});
+
+
+// 🔥 LOGIN API
+app.post("/login", (req, res) => {
+  const { role, rollNo, email, password, clubName } = req.body;
+
+  let query = "";
+  let values = [];
+
+  console.log("📥 Login Data:", req.body);
+
+  // 🟢 STUDENT
+  if (role === "Student") {
+    query = "SELECT * FROM student WHERE roll=? AND password=?";
+    values = [rollNo, password];
+  }
+
+  // 🟣 ALUMNI
+  else if (role === "Alumni") {
+    query = "SELECT * FROM alumni WHERE email=? AND password=?";
+    values = [email, password];
+  }
+
+  // 🟡 ORGANIZER
+  else if (role === "Organization") {
+    query = "SELECT * FROM organizer WHERE roll=? AND club_name=? AND password=?";
+    values = [rollNo, clubName, password];
+  }
+
+  // 🔴 ADMIN
+  else if (role === "Admin") {
+    query = "SELECT * FROM admin WHERE email=? AND password=?";
+    values = [email, password];
+  }
+
+  else {
+    return res.status(400).json({ message: "Invalid role ❌" });
+  }
+
+  db.query(query, values, (err, result) => {
+    if (err) {
+      console.log("❌ Login Error:", err);
+      return res.status(500).json({ message: "Server Error ❌" });
+    }
+
+    console.log("🔍 DB Result:", result);
+
+    if (result.length > 0) {
+      res.json({
+        success: true,
+        user: result[0],
+        role: role
+      });
+    } else {
+      res.json({
+        success: false,
+        message: "Invalid Credentials ❌"
+      });
+    }
   });
 });
 
 
 // 🔥 START SERVER
 app.listen(5000, () => {
-  console.log("Server running on port 5000 🚀");
-});
-// 🔥 REGISTER API
-app.post("/register", (req, res) => {
-  const {
-    name,
-    email,
-    password,
-    role,
-    roll,
-    branch,
-    year,
-    phone
-  } = req.body;
-
-  const sql = `
-    INSERT INTO student (name, email, password, roll, branch, year, phone)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  db.query(
-    sql,
-    [name, email, password, roll, branch, year, phone],
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).json({ message: "Error saving data" });
-      }
-
-      res.json({ message: "User Registered Successfully 🎉" });
-    }
-  );
-});
-// 🔥 LOGIN API
-app.post("/login", (req, res) => {
-  const { role, roll, email, password, club } = req.body;
-
-  let query = "";
-
-  if (role === "Student") {
-    query = `SELECT * FROM student WHERE roll='${roll}' AND password='${password}'`;
-  }
-
-  else if (role === "Organization") {
-    query = `SELECT * FROM organizer WHERE roll='${roll}' AND club_name='${club}' AND password='${password}'`;
-  }
-
-  else if (role === "Admin") {
-    query = `SELECT * FROM admin WHERE email='${email}' AND password='${password}'`;
-  }
-
-  else if (role === "Alumni") {
-    query = `SELECT * FROM alumni WHERE email='${email}' AND password='${password}'`;
-  }
-
-  db.query(query, (err, result) => {
-    if (err) return res.status(500).send(err);
-
-    if (result.length > 0) {
-      res.json({ success: true, user: result[0], role });
-    } else {
-      res.json({ success: false, message: "Invalid Credentials ❌" });
-    }
-  });
+  console.log("🚀 Server running on port 5000");
 });

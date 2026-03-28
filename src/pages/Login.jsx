@@ -7,13 +7,14 @@ function Login() {
   const [role, setRole] = useState("Student");
   const navigate = useNavigate();
 
-  // 🔥 FORM DATA
   const [formData, setFormData] = useState({
     roll: "",
     email: "",
     password: "",
     club: ""
   });
+
+  const [loading, setLoading] = useState(false);
 
   // 🔥 HANDLE INPUT
   const handleChange = (e) => {
@@ -25,6 +26,26 @@ function Login() {
 
   // 🔥 LOGIN FUNCTION
   const handleLogin = async () => {
+
+    // ✅ VALIDATION
+    if (role === "Student" || role === "Organization") {
+      if (!formData.roll || !formData.password) {
+        return alert("Enter Roll No & Password ❌");
+      }
+    }
+
+    if (role === "Organization" && !formData.club) {
+      return alert("Select Club ❌");
+    }
+
+    if (role === "Admin" || role === "Alumni") {
+      if (!formData.email || !formData.password) {
+        return alert("Enter Email & Password ❌");
+      }
+    }
+
+    setLoading(true);
+
     try {
       const res = await fetch("http://localhost:5000/login", {
         method: "POST",
@@ -32,8 +53,11 @@ function Login() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          ...formData,
-          role: role
+          role: role,
+          rollNo: formData.roll.trim(),
+          email: formData.email.trim(),
+          password: formData.password.trim(),
+          clubName: formData.club
         })
       });
 
@@ -42,20 +66,22 @@ function Login() {
       if (data.success) {
         alert("Login Successful ✅");
 
-        // 🔥 ROLE BASED ROUTING (FIXED)
-        if (data.role === "Student") navigate("/student");
-        else if (data.role === "Admin") navigate("/admin");
-        else if (data.role === "Organization") navigate("/organizer");
-        else if (data.role === "Alumni") navigate("/alumni");
+        // 🔥 ROLE BASED ROUTING
+        if (role === "Student") navigate("/student");
+        else if (role === "Admin") navigate("/admin");
+        else if (role === "Organization") navigate("/organizer");
+        else if (role === "Alumni") navigate("/alumni");
 
       } else {
-        alert(data.message);
+        alert(data.message || "Invalid Credentials ❌");
       }
 
     } catch (error) {
       console.log(error);
       alert("Server Error ❌");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -65,19 +91,13 @@ function Login() {
         backgroundImage: `url(${bg})`,
       }}
     >
-      {/* OVERLAY */}
       <div className="absolute inset-0 bg-black/40"></div>
 
-      {/* LOGIN CARD */}
       <div className="relative bg-white/85 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-96 border border-white/30">
 
         {/* LOGO */}
         <div className="flex justify-center mb-3">
-          <img
-            src={logo}
-            alt="ALIET logo"
-            className="w-20 h-20 object-contain"
-          />
+          <img src={logo} alt="logo" className="w-20 h-20 object-contain" />
         </div>
 
         {/* TITLE */}
@@ -93,7 +113,7 @@ function Login() {
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full mb-4 p-2 border rounded focus:ring-2 focus:ring-blue-400"
         >
           <option>Student</option>
           <option>Admin</option>
@@ -101,36 +121,43 @@ function Login() {
           <option>Alumni</option>
         </select>
 
-        {/* 🔥 STUDENT + ORGANIZER (ROLL) */}
+        {/* ROLL */}
         {(role === "Student" || role === "Organization") && (
           <input
             type="text"
             name="roll"
+            value={formData.roll}
             onChange={handleChange}
             placeholder="Enter Roll Number"
-            className="w-full mb-3 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full mb-3 p-2 border rounded"
           />
         )}
 
-        {/* 🔥 ORGANIZER EXTRA (CLUB) */}
+        {/* CLUB */}
         {role === "Organization" && (
-          <input
-            type="text"
+          <select
             name="club"
+            value={formData.club}
             onChange={handleChange}
-            placeholder="Enter Club Name"
-            className="w-full mb-3 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
+            className="w-full mb-3 p-2 border rounded"
+          >
+            <option value="">Select Club</option>
+            <option value="Technical">Technical Club</option>
+            <option value="Cultural">Cultural Club</option>
+            <option value="Sports">Sports Club</option>
+            <option value="Literary">Literary Club</option>
+          </select>
         )}
 
-        {/* 🔥 ADMIN + ALUMNI (EMAIL) */}
+        {/* EMAIL */}
         {(role === "Admin" || role === "Alumni") && (
           <input
             type="email"
             name="email"
+            value={formData.email}
             onChange={handleChange}
             placeholder="Enter Email"
-            className="w-full mb-3 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full mb-3 p-2 border rounded"
           />
         )}
 
@@ -138,17 +165,19 @@ function Login() {
         <input
           type="password"
           name="password"
+          value={formData.password}
           onChange={handleChange}
           placeholder="Enter Password"
-          className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full mb-4 p-2 border rounded"
         />
 
-        {/* LOGIN BUTTON */}
+        {/* BUTTON */}
         <button
           onClick={handleLogin}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2 rounded hover:scale-105 transition duration-200"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white p-2 rounded hover:scale-105 transition"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         {/* REGISTER */}
@@ -156,7 +185,7 @@ function Login() {
           New user?{" "}
           <span
             onClick={() => navigate("/register")}
-            className="text-blue-600 cursor-pointer font-medium hover:underline"
+            className="text-blue-600 cursor-pointer hover:underline"
           >
             Register here
           </span>

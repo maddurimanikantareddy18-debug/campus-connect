@@ -3,10 +3,6 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import bg from "../assets/bg.jpg";
 
-import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-
 function Register() {
   const [role, setRole] = useState("Student");
   const navigate = useNavigate();
@@ -19,9 +15,10 @@ function Register() {
     branch: "",
     year: "",
     phone: "",
-    club: "",
+    club_name: "",
     staff_id: "",
     department: "",
+    admin_role: "",
     company: "",
     job_role: ""
   });
@@ -35,65 +32,50 @@ function Register() {
 
   const handleRegister = async () => {
     try {
-      let emailToUse = formData.email;
-
-      if (role === "Student" || role === "Organization") {
-        emailToUse = formData.roll + "@campus.com";
-      }
-
-      // 🔥 Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        emailToUse,
-        formData.password
-      );
-
-      const user = userCredential.user;
-
-      // 🔥 Firestore Save
-      await setDoc(doc(db, "users", user.uid), {
-        ...formData,
-        email: emailToUse,
-        role: role
-      });
-
-      // 🔥 MySQL API
-      await fetch("http://localhost:5000/register", {
+      const res = await fetch("http://localhost:5000/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
           ...formData,
-          email: emailToUse,
           role: role
         })
       });
 
-      alert("Account Created Successfully 🎉");
-      navigate("/");
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Account Created Successfully 🎉");
+        navigate("/");
+      } else {
+        alert(data.message || "Registration Failed ❌");
+      }
 
     } catch (error) {
-      alert(error.message);
+      console.log(error);
+      alert("Server Error ❌");
     }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{ backgroundImage: `url(${bg})` }}>
-
+    <div
+      className="h-screen flex items-center justify-center bg-cover bg-center relative"
+      style={{ backgroundImage: `url(${bg})` }}
+    >
       <div className="absolute inset-0 bg-black/50"></div>
 
-      <div className="relative bg-white/85 p-8 rounded-2xl shadow-2xl w-[420px]">
+      <div className="relative bg-white/90 p-8 rounded-2xl shadow-2xl w-[420px]">
 
         <div className="flex justify-center mb-3">
           <img src={logo} alt="logo" className="w-16 h-16" />
         </div>
 
-        <h2 className="text-xl font-bold text-center text-blue-900">
+        <h2 className="text-xl font-bold text-center text-blue-900 mb-3">
           ALIET Register
         </h2>
 
+        {/* ROLE */}
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
@@ -111,8 +93,27 @@ function Register() {
         {role === "Student" && (
           <>
             <input name="roll" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Roll No" />
-            <input name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Branch" />
-            <input name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Year" />
+
+            <select name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Branch</option>
+              <option>CSE</option>
+              <option>ECE</option>
+              <option>EEE</option>
+              <option>Civil</option>
+              <option>Mechanical</option>
+              <option>IT</option>
+              <option>AIML</option>
+            </select>
+
+            <select name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Year</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+            </select>
+
+            <input name="email" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Email" />
             <input name="phone" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Phone" />
           </>
         )}
@@ -121,8 +122,35 @@ function Register() {
         {role === "Organization" && (
           <>
             <input name="roll" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Roll No" />
-            <input name="club" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Club Name" />
-            <input name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Year" />
+
+            <select name="club_name" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Club</option>
+              <option>Technical</option>
+              <option>Cultural</option>
+              <option>Sports</option>
+              <option>Literary</option>
+            </select>
+
+            <select name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Branch</option>
+              <option>CSE</option>
+              <option>ECE</option>
+              <option>EEE</option>
+              <option>Civil</option>
+              <option>Mechanical</option>
+              <option>IT</option>
+              <option>AIML</option>
+            </select>
+
+            <select name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Year</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+            </select>
+
+            <input name="email" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Email" />
             <input name="phone" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Phone" />
           </>
         )}
@@ -131,7 +159,26 @@ function Register() {
         {role === "Admin" && (
           <>
             <input name="staff_id" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Staff ID" />
-            <input name="department" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Department" />
+
+            <select name="admin_role" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Role</option>
+              <option>HOD</option>
+              <option>Professor</option>
+              <option>Assistant Professor</option>
+              <option>Lecturer</option>
+            </select>
+
+            <select name="department" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Department</option>
+              <option>CSE</option>
+              <option>ECE</option>
+              <option>EEE</option>
+              <option>Civil</option>
+              <option>Mechanical</option>
+              <option>IT</option>
+              <option>AIML</option>
+            </select>
+
             <input name="email" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Email" />
             <input name="phone" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Phone" />
           </>
@@ -140,8 +187,27 @@ function Register() {
         {/* ALUMNI */}
         {role === "Alumni" && (
           <>
-            <input name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Branch" />
-            <input name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Passout Year" />
+            <select name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Branch</option>
+              <option>CSE</option>
+              <option>ECE</option>
+              <option>EEE</option>
+              <option>Civil</option>
+              <option>Mechanical</option>
+              <option>IT</option>
+              <option>AIML</option>
+            </select>
+
+            <select name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
+              <option value="">Select Passout Year</option>
+              <option>2019</option>
+              <option>2020</option>
+              <option>2021</option>
+              <option>2022</option>
+              <option>2023</option>
+              <option>2024</option>
+            </select>
+
             <input name="company" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Company" />
             <input name="job_role" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Job Role" />
             <input name="email" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Email" />
