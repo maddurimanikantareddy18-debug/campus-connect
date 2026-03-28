@@ -3,7 +3,12 @@ import logo from "../assets/logo.png";
 import bg from "../assets/bg.jpg";
 import { useNavigate } from "react-router-dom";
 
+// 🔥 NEW (Firebase)
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase";
+
 function Login() {
+
   const [role, setRole] = useState("Student");
   const navigate = useNavigate();
 
@@ -16,7 +21,6 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
 
-  // 🔥 HANDLE INPUT
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -24,29 +28,29 @@ function Login() {
     });
   };
 
-  // 🔥 LOGIN FUNCTION
   const handleLogin = async () => {
 
     // ✅ VALIDATION
-    if (role === "Student" || role === "Organization") {
-      if (!formData.roll || !formData.password) {
-        return alert("Enter Roll No & Password ❌");
-      }
+    if ((role === "Student" || role === "Organization") && (!formData.roll || !formData.password)) {
+      alert("Enter Roll No & Password ❌");
+      return;
     }
 
     if (role === "Organization" && !formData.club) {
-      return alert("Select Club ❌");
+      alert("Select Club ❌");
+      return;
     }
 
-    if (role === "Admin" || role === "Alumni") {
-      if (!formData.email || !formData.password) {
-        return alert("Enter Email & Password ❌");
-      }
+    if ((role === "Admin" || role === "Alumni") && (!formData.email || !formData.password)) {
+      alert("Enter Email & Password ❌");
+      return;
     }
 
     setLoading(true);
 
     try {
+
+      // 🔥 TRY BACKEND FIRST (your existing system)
       const res = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: {
@@ -62,23 +66,70 @@ function Login() {
       });
 
       const data = await res.json();
+      const userRole = data.role || role;
 
       if (data.success) {
+
         alert("Login Successful ✅");
 
-        // 🔥 ROLE BASED ROUTING
-        if (role === "Student") navigate("/student");
-        else if (role === "Admin") navigate("/admin");
-        else if (role === "Organization") navigate("/organizer");
-        else if (role === "Alumni") navigate("/alumni");
+        localStorage.setItem("user", JSON.stringify({
+          ...data.user,
+          role: userRole
+        }));
+
+        // 🔀 ROUTING
+        if (userRole === "Student") navigate("/student");
+        else if (userRole === "Admin") navigate("/admin");
+        else if (userRole === "Organization") navigate("/organizer");
+        else if (userRole === "Alumni") navigate("/alumni");
+        else navigate("/");
 
       } else {
-        alert(data.message || "Invalid Credentials ❌");
+        throw new Error("Backend failed");
       }
 
     } catch (error) {
-      console.log(error);
-      alert("Server Error ❌");
+
+      console.log("Backend failed → switching to Firebase");
+
+      // 🔥 FIREBASE FALLBACK (only for Admin & Alumni)
+      if (role === "Admin" || role === "Alumni") {
+        try {
+          const res = await signInWithEmailAndPassword(
+            auth,
+            formData.email,
+            formData.password
+          );
+
+          alert("Firebase Login Success ✅");
+
+          localStorage.setItem("user", JSON.stringify({
+            name: formData.email.split("@")[0],
+            role: role
+          }));
+
+          if (role === "Admin") navigate("/admin");
+          else navigate("/alumni");
+
+        } catch (err) {
+          alert("Login Failed ❌");
+        }
+
+      } else {
+
+        // 🔥 LAST FALLBACK (offline login)
+        alert("Server offline — using local login");
+
+        localStorage.setItem("user", JSON.stringify({
+          role: role,
+          roll: formData.roll,
+          club: formData.club
+        }));
+
+        if (role === "Student") navigate("/student");
+        else if (role === "Organization") navigate("/organizer");
+
+      }
     }
 
     setLoading(false);
@@ -87,20 +138,16 @@ function Login() {
   return (
     <div
       className="h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{
-        backgroundImage: `url(${bg})`,
-      }}
+      style={{ backgroundImage: `url(${bg})` }}
     >
       <div className="absolute inset-0 bg-black/40"></div>
 
-      <div className="relative bg-white/85 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-96 border border-white/30">
+      <div className="relative bg-white/85 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-96 border">
 
-        {/* LOGO */}
         <div className="flex justify-center mb-3">
           <img src={logo} alt="logo" className="w-20 h-20 object-contain" />
         </div>
 
-        {/* TITLE */}
         <h2 className="text-xl font-bold text-center text-blue-900">
           ALIET CampusConnect
         </h2>
@@ -109,11 +156,10 @@ function Login() {
           Andhra Loyola Institute of Engineering & Technology
         </p>
 
-        {/* ROLE SELECT */}
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className="w-full mb-4 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+          className="w-full mb-4 p-2 border rounded"
         >
           <option>Student</option>
           <option>Admin</option>
@@ -121,7 +167,6 @@ function Login() {
           <option>Alumni</option>
         </select>
 
-        {/* ROLL */}
         {(role === "Student" || role === "Organization") && (
           <input
             type="text"
@@ -133,7 +178,6 @@ function Login() {
           />
         )}
 
-        {/* CLUB */}
         {role === "Organization" && (
           <select
             name="club"
@@ -142,14 +186,13 @@ function Login() {
             className="w-full mb-3 p-2 border rounded"
           >
             <option value="">Select Club</option>
-            <option value="Technical">Technical Club</option>
-            <option value="Cultural">Cultural Club</option>
-            <option value="Sports">Sports Club</option>
-            <option value="Literary">Literary Club</option>
+            <option>ATC</option>
+            <option>Magic Club</option>
+            <option>Library</option>
+            <option>AICUF</option>
           </select>
         )}
 
-        {/* EMAIL */}
         {(role === "Admin" || role === "Alumni") && (
           <input
             type="email"
@@ -161,7 +204,6 @@ function Login() {
           />
         )}
 
-        {/* PASSWORD */}
         <input
           type="password"
           name="password"
@@ -171,16 +213,14 @@ function Login() {
           className="w-full mb-4 p-2 border rounded"
         />
 
-        {/* BUTTON */}
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="w-full bg-blue-600 text-white p-2 rounded hover:scale-105 transition"
+          className="w-full bg-blue-600 text-white p-2 rounded font-bold"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        {/* REGISTER */}
         <p className="text-sm text-center mt-4">
           New user?{" "}
           <span
@@ -190,6 +230,7 @@ function Login() {
             Register here
           </span>
         </p>
+
       </div>
     </div>
   );

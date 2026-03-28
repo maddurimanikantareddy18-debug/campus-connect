@@ -161,3 +161,29 @@ app.post("/login", (req, res) => {
 app.listen(5000, () => {
   console.log("🚀 Server running on port 5000");
 });
+// SEND MESSAGE
+app.post("/send-message", (req, res) => {
+  const { sender, message, group } = req.body;
+
+  const sql = "INSERT INTO messages (sender, message, group_name) VALUES (?, ?, ?)";
+
+  db.query(sql, [sender, message, group], (err) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).send("Error");
+    }
+    res.json({ success: true });
+  });
+});
+
+// GET MESSAGES
+app.get("/messages/:group", (req, res) => {
+  const group = req.params.group;
+
+  const sql = "SELECT * FROM messages WHERE group_name=? ORDER BY timestamp ASC";
+
+  db.query(sql, [group], (err, result) => {
+    if (err) return res.status(500).send(err);
+    res.json(result);
+  });
+});

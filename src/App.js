@@ -1,27 +1,31 @@
 import { Routes, Route } from "react-router-dom";
 
-// 🔥 PAGES
+// Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-
-// 🔥 DASHBOARDS
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import AlumniDashboard from "./pages/AlumniDashboard";
+import ChatPage from "./pages/ChatPage";
 
 function App() {
   return (
     <Routes>
+
       {/* AUTH */}
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* ROLE DASHBOARDS */}
+      {/* DASHBOARDS */}
       <Route path="/student" element={<StudentDashboard />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/organizer" element={<OrganizerDashboard />} />
       <Route path="/alumni" element={<AlumniDashboard />} />
+
+      {/* CHAT (VERY IMPORTANT) */}
+      <Route path="/chat/:group" element={<ChatPage />} />
+
     </Routes>
   );
 }

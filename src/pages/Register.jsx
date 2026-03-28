@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import bg from "../assets/bg.jpg";
 
+// 🔥 Firebase
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../firebase";
+import { setDoc, doc } from "firebase/firestore";
+
 function Register() {
+
   const [role, setRole] = useState("Student");
   const navigate = useNavigate();
 
@@ -31,7 +37,32 @@ function Register() {
   };
 
   const handleRegister = async () => {
+
+    if (!formData.name || !formData.password) {
+      return alert("Name & Password required ❌");
+    }
+
     try {
+
+      // 🔥 1. FIREBASE AUTH
+      const resFirebase = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      // 🔥 2. SAVE IN FIRESTORE
+      await setDoc(doc(db, "users", resFirebase.user.uid), {
+        name: formData.name,
+        role: role,
+        branch: formData.branch,
+        year: formData.year,
+        roll: formData.roll,
+        club: formData.club_name,
+        phone: formData.phone
+      });
+
+      // 🔥 3. SAVE IN YOUR BACKEND (MYSQL)
       const res = await fetch("http://localhost:5000/register", {
         method: "POST",
         headers: {
@@ -45,24 +76,23 @@ function Register() {
 
       const data = await res.json();
 
-      if (data.success) {
+      if (data.message || data.success) {
         alert("Account Created Successfully 🎉");
         navigate("/");
       } else {
-        alert(data.message || "Registration Failed ❌");
+        alert("Registration Failed ❌");
       }
 
     } catch (error) {
       console.log(error);
-      alert("Server Error ❌");
+      alert("Registration Error ❌");
     }
   };
 
   return (
-    <div
-      className="h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{ backgroundImage: `url(${bg})` }}
-    >
+    <div className="h-screen flex items-center justify-center bg-cover bg-center relative"
+      style={{ backgroundImage: `url(${bg})` }}>
+
       <div className="absolute inset-0 bg-black/50"></div>
 
       <div className="relative bg-white/90 p-8 rounded-2xl shadow-2xl w-[420px]">
@@ -75,12 +105,8 @@ function Register() {
           ALIET Register
         </h2>
 
-        {/* ROLE */}
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="w-full mb-3 p-2 border rounded"
-        >
+        <select value={role} onChange={(e) => setRole(e.target.value)}
+          className="w-full mb-3 p-2 border rounded">
           <option>Student</option>
           <option>Admin</option>
           <option>Organization</option>
@@ -97,12 +123,13 @@ function Register() {
             <select name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
               <option value="">Select Branch</option>
               <option>CSE</option>
+              <option>CSE-AIML</option>
+              <option>CSE-DS</option>
               <option>ECE</option>
               <option>EEE</option>
               <option>Civil</option>
               <option>Mechanical</option>
               <option>IT</option>
-              <option>AIML</option>
             </select>
 
             <select name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
@@ -125,21 +152,22 @@ function Register() {
 
             <select name="club_name" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
               <option value="">Select Club</option>
-              <option>Technical</option>
-              <option>Cultural</option>
-              <option>Sports</option>
-              <option>Literary</option>
+              <option>ATC (ALIET Techpreneur Club)</option>
+              <option>ALIET Magic Club</option>
+              <option>ALIET Library</option>
+              <option>AICUF</option>
             </select>
 
             <select name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
               <option value="">Select Branch</option>
               <option>CSE</option>
+              <option>CSE-AIML</option>
+              <option>CSE-DS</option>
               <option>ECE</option>
               <option>EEE</option>
               <option>Civil</option>
               <option>Mechanical</option>
               <option>IT</option>
-              <option>AIML</option>
             </select>
 
             <select name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
@@ -171,12 +199,13 @@ function Register() {
             <select name="department" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
               <option value="">Select Department</option>
               <option>CSE</option>
+              <option>CSE-AIML</option>
+              <option>CSE-DS</option>
               <option>ECE</option>
               <option>EEE</option>
               <option>Civil</option>
               <option>Mechanical</option>
               <option>IT</option>
-              <option>AIML</option>
             </select>
 
             <input name="email" onChange={handleChange} className="w-full mb-2 p-2 border rounded" placeholder="Email" />
@@ -190,12 +219,13 @@ function Register() {
             <select name="branch" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
               <option value="">Select Branch</option>
               <option>CSE</option>
+              <option>CSE-AIML</option>
+              <option>CSE-DS</option>
               <option>ECE</option>
               <option>EEE</option>
               <option>Civil</option>
               <option>Mechanical</option>
               <option>IT</option>
-              <option>AIML</option>
             </select>
 
             <select name="year" onChange={handleChange} className="w-full mb-2 p-2 border rounded">
@@ -217,7 +247,7 @@ function Register() {
 
         <input type="password" name="password" onChange={handleChange} className="w-full mb-4 p-2 border rounded" placeholder="Password" />
 
-        <button onClick={handleRegister} className="w-full bg-blue-600 text-white p-2 rounded">
+        <button onClick={handleRegister} className="w-full bg-blue-600 text-white p-2 rounded font-bold">
           Create Account
         </button>
 
