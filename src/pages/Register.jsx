@@ -35,18 +35,28 @@ function Register() {
 
   const handleRegister = async () => {
     try {
-      let emailToUse = formData.email;
+      // 🔥 EMAIL LOGIC
+          let emailToUse = formData.email;
 
-      if (role === "Student" || role === "Organization") {
-        emailToUse = formData.roll + "@campus.com";
-      }
+// fallback only if empty
+          if (!emailToUse && (role === "Student" || role === "Organization")) {
+             emailToUse = formData.roll + "@campus.com";
+            }
 
-      // 🔥 Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        emailToUse,
-        formData.password
-      );
+// 🔥 VALIDATION
+          if (!formData.password) return alert("Enter Password");
+
+          if (role === "Student" && !formData.roll) {
+           return alert("Enter Roll Number");
+        }
+
+        if (role === "Organization" && (!formData.roll || !formData.club)) {
+             return alert("Enter Roll + Club");
+        }
+
+        if ((role === "Admin" || role === "Alumni") && !formData.email) {
+          return alert("Enter Email");
+        }
 
       const user = userCredential.user;
 

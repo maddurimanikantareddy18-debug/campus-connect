@@ -7,7 +7,6 @@ function Login() {
   const [role, setRole] = useState("Student");
   const navigate = useNavigate();
 
-  // 🔥 FORM DATA
   const [formData, setFormData] = useState({
     roll: "",
     email: "",
@@ -15,7 +14,6 @@ function Login() {
     club: ""
   });
 
-  // 🔥 HANDLE INPUT
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -23,8 +21,24 @@ function Login() {
     });
   };
 
-  // 🔥 LOGIN FUNCTION
   const handleLogin = async () => {
+    // 🔥 BASIC VALIDATION
+    if (
+      (role === "Student" || role === "Organization") && !formData.roll
+    ) {
+      return alert("Enter Roll Number");
+    }
+
+    if (
+      (role === "Admin" || role === "Alumni") && !formData.email
+    ) {
+      return alert("Enter Email");
+    }
+
+    if (!formData.password) {
+      return alert("Enter Password");
+    }
+
     try {
       const res = await fetch("http://localhost:5000/login", {
         method: "POST",
@@ -42,14 +56,18 @@ function Login() {
       if (data.success) {
         alert("Login Successful ✅");
 
-        // 🔥 ROLE BASED ROUTING (FIXED)
+        // 🔥 SAVE USER (important for dashboard)
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // 🔥 ROLE ROUTING (FIXED)
         if (data.role === "Student") navigate("/student");
         else if (data.role === "Admin") navigate("/admin");
         else if (data.role === "Organization") navigate("/organizer");
         else if (data.role === "Alumni") navigate("/alumni");
+        else navigate("/");
 
       } else {
-        alert(data.message);
+        alert(data.message || "Invalid Credentials ❌");
       }
 
     } catch (error) {
@@ -61,26 +79,16 @@ function Login() {
   return (
     <div
       className="h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{
-        backgroundImage: `url(${bg})`,
-      }}
+      style={{ backgroundImage: `url(${bg})` }}
     >
-      {/* OVERLAY */}
       <div className="absolute inset-0 bg-black/40"></div>
 
-      {/* LOGIN CARD */}
       <div className="relative bg-white/85 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-96 border border-white/30">
 
-        {/* LOGO */}
         <div className="flex justify-center mb-3">
-          <img
-            src={logo}
-            alt="ALIET logo"
-            className="w-20 h-20 object-contain"
-          />
+          <img src={logo} alt="logo" className="w-20 h-20" />
         </div>
 
-        {/* TITLE */}
         <h2 className="text-xl font-bold text-center text-blue-900">
           ALIET CampusConnect
         </h2>
@@ -89,11 +97,10 @@ function Login() {
           Andhra Loyola Institute of Engineering & Technology
         </p>
 
-        {/* ROLE SELECT */}
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full mb-4 p-2 border rounded"
         >
           <option>Student</option>
           <option>Admin</option>
@@ -101,62 +108,56 @@ function Login() {
           <option>Alumni</option>
         </select>
 
-        {/* 🔥 STUDENT + ORGANIZER (ROLL) */}
         {(role === "Student" || role === "Organization") && (
           <input
             type="text"
             name="roll"
             onChange={handleChange}
             placeholder="Enter Roll Number"
-            className="w-full mb-3 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full mb-3 p-2 border rounded"
           />
         )}
 
-        {/* 🔥 ORGANIZER EXTRA (CLUB) */}
         {role === "Organization" && (
           <input
             type="text"
             name="club"
             onChange={handleChange}
             placeholder="Enter Club Name"
-            className="w-full mb-3 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full mb-3 p-2 border rounded"
           />
         )}
 
-        {/* 🔥 ADMIN + ALUMNI (EMAIL) */}
         {(role === "Admin" || role === "Alumni") && (
           <input
             type="email"
             name="email"
             onChange={handleChange}
             placeholder="Enter Email"
-            className="w-full mb-3 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full mb-3 p-2 border rounded"
           />
         )}
 
-        {/* PASSWORD */}
         <input
           type="password"
           name="password"
           onChange={handleChange}
           placeholder="Enter Password"
-          className="w-full mb-4 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full mb-4 p-2 border rounded"
         />
 
-        {/* LOGIN BUTTON */}
         <button
           onClick={handleLogin}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2 rounded hover:scale-105 transition duration-200"
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2 rounded"
         >
           Login
         </button>
 
-        {/* REGISTER */}
         <p className="text-sm text-center mt-4">
           New user?{" "}
           <span
             onClick={() => navigate("/register")}
-            className="text-blue-600 cursor-pointer font-medium hover:underline"
+            className="text-blue-600 cursor-pointer"
           >
             Register here
           </span>
