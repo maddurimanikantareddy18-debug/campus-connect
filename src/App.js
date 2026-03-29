@@ -7,24 +7,21 @@ import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import AlumniDashboard from "./pages/AlumniDashboard";
-import ChatPage from "./pages/ChatPage";
+import ChatPage from "./pages/chat";   // ✅ FIXED
 
 function App() {
   return (
     <Routes>
 
-      {/* AUTH */}
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* DASHBOARDS */}
       <Route path="/student" element={<StudentDashboard />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/organizer" element={<OrganizerDashboard />} />
       <Route path="/alumni" element={<AlumniDashboard />} />
 
-      {/* CHAT (VERY IMPORTANT) */}
-      <Route path="/chat/:group" element={<ChatPage />} />
+      <Route path="/chat/:group" element={<ChatPage />} />  {/* ✅ FIXED */}
 
     </Routes>
   );
