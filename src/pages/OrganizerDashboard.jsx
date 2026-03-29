@@ -10,12 +10,12 @@ function OrganizerDashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // 🔐 AUTH CHECK
+  // 🔐 AUTH CHECK (FIXED)
   useEffect(() => {
     if (!user || user.role !== "Organization") {
       navigate("/");
     }
-  }, []);
+  }, [user, navigate]);
 
   // 🔍 SEARCH STATE
   const [search, setSearch] = useState("");
@@ -49,10 +49,10 @@ function OrganizerDashboard() {
 
   // 📚 CLUBS
   const clubs = [
-    { name: "ALIET Techpreneur Club", short: "ATC", color: "bg-blue-500" },
-    { name: "ALIET Magic Club", short: "Magic", color: "bg-purple-500" },
-    { name: "ALIET Central Library", short: "Library", color: "bg-green-500" },
-    { name: "AICUF", short: "AICUF", color: "bg-pink-500" }
+    { name: "ALIET Techpreneur Club", short: "ATC" },
+    { name: "ALIET Magic Club", short: "Magic" },
+    { name: "ALIET Central Library", short: "Library" },
+    { name: "AICUF", short: "AICUF" }
   ];
 
   const openChat = (group) => {

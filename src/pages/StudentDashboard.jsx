@@ -8,11 +8,12 @@ function StudentDashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
+  // 🔐 AUTH CHECK (FIXED)
   useEffect(() => {
     if (!user || user.role !== "Student") {
       navigate("/");
     }
-  }, []);
+  }, [user, navigate]);
 
   const clubs = [
     { name: "Techpreneur Club", short: "ATC", color: "bg-blue-500" },
