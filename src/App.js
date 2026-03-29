@@ -7,7 +7,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import AlumniDashboard from "./pages/AlumniDashboard";
-import ChatPage from "./pages/chat";   // ✅ FIXED
+import ChatPage from "./pages/ChatPage";
 
 function App() {
   return (
